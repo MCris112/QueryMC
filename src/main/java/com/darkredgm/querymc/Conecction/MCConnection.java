@@ -5,10 +5,7 @@ package com.darkredgm.querymc.Conecction;
 import com.darkredgm.querymc.Database.Schema.Schema;
 import com.darkredgm.querymc.Env.Env;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,6 +99,19 @@ public  class MCConnection implements DatabaseEnv {
         }
 
         return ps.execute();
+    }
+
+    public ResultSet executeInsertGetId( String sql, List<Object> bindings ) throws SQLException {
+        Connection conn = getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+        for (int i = 0; i < bindings.size(); i++) {
+            ps.setObject(i + 1, bindings.get(i));
+        }
+
+        ps.execute(sql);
+
+        return ps.getGeneratedKeys();
     }
 
     public void execute(String sql, ArrayList<Object> bindings) throws SQLException {

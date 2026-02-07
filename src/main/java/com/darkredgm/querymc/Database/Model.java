@@ -6,10 +6,13 @@ import com.darkredgm.querymc.Conecction.DatabaseEnv;
 import com.darkredgm.querymc.Database.ORM.DB;
 import com.darkredgm.querymc.Database.ORM.QueryBuilder;
 import com.darkredgm.querymc.Database.ORM.SetBuilder;
+import com.darkredgm.querymc.Database.ORM.SqlOrder;
 import com.darkredgm.querymc.Exceptions.IllegalAccessWithoutKey;
 import com.darkredgm.querymc.Exceptions.IllegalUpdateWithNoKey;
 
 import java.lang.reflect.Field;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +20,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class Model implements DatabaseEnv {
+
+    /**
+     * Constructor por defecto para evitar error en los query
+     */
+    public Model() {
+    }
 
     public boolean hasKey() {
         return true;
@@ -161,7 +170,38 @@ public abstract class Model implements DatabaseEnv {
             return;
         }
         // Save the values into db
-        DB.on(this.getTableName()).insert( builder );
+        ResultSet result = DB.use(this).table(this.getTableName()).insertGetId( builder );
+
+        if ( result.next() )
+        {
+            ResultSetMetaData metaData = result.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i);
+
+
+            }
+        }
         this.isModelFromDatabase = true;
+
+        if ( !this.hasKey() )
+            return;
+
+        Model model = QueryBuilder.use(this.getClass())
+                .limit(1)
+                .orderBy( "id", SqlOrder.DESC )
+                .last();
+
+        if ( model == null )
+            throw new RuntimeException("No se pudo obtener el modelo final");
+
+        try{
+            for (ModelAttribute attribute : this.getFieldAttributes()) {
+                attribute.setValue( model.getAttribute( attribute.getName() ));
+            }
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
