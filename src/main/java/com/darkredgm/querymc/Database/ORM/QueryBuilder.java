@@ -111,7 +111,12 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
      * @return
      */
     public M first() throws SQLException {
-        return this.get().getFirst();
+        MCList<M> models = this.get();
+
+        if ( models.isEmpty() )
+            return null;
+
+        return models.getFirst();
     }
 
     /**
@@ -119,7 +124,12 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
      * @return
      */
     public M last() throws SQLException {
-        return this.get().getLast();
+        MCList<M> models = this.get();
+
+        if ( models.isEmpty() )
+            return null;
+
+        return models.getLast();
     }
 
 
@@ -262,6 +272,24 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
     public QueryBuilder<M> select( String... columns )
     {
         this.columns = columns;
+        return this;
+    }
+
+    protected String orderByColumn = null;
+    protected SqlOrder sqlOrder = null;
+
+    public String getOrderByColumn() {
+        return orderByColumn;
+    }
+
+    public SqlOrder getSqlOrder() {
+        return sqlOrder;
+    }
+
+    public QueryBuilder<M> orderBy(String column, SqlOrder order )
+    {
+        this.orderByColumn = column;
+        this.sqlOrder = order;
         return this;
     }
 

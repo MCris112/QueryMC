@@ -21,7 +21,7 @@ public class Grammar {
             sql.append("*");
         }else {
             for (int i = 0; i < query.getColumns().length; i++) {
-                sql.append(query.getTableName()+"."+ query.getColumns()[i]);
+                sql.append(query.getTableName()).append(".").append(query.getColumns()[i]);
                 if (i != query.getColumns().length - 1)
                 {
                     sql.append(", ");
@@ -31,15 +31,18 @@ public class Grammar {
 
         sql.append(" FROM ").append(query.getTableName()).append(" ");
 
-        compileComponents(query, sql);
-
-        return sql.toString();
+        return compileComponents(query, sql).toString();
     }
 
     protected StringBuilder compileComponents( QueryBuilder<?> query, StringBuilder sql  )
     {
 
         sql.append( this.compileWhere(query) );
+
+        if ( query.getOrderByColumn() != null  && query.getSqlOrder() != null )
+        {
+            sql.append(" ORDER BY ").append(query.getOrderByColumn()).append(" ").append(query.getSqlOrder());
+        }
 
         if ( query.getLimit() > 0 )
         {
