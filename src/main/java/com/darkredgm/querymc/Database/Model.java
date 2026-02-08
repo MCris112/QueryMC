@@ -2,12 +2,14 @@ package com.darkredgm.querymc.Database;
 
 
 import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Conecction.DatabaseEnv;
 import com.darkredgm.querymc.Database.ORM.DB;
 import com.darkredgm.querymc.Database.ORM.QueryBuilder;
 import com.darkredgm.querymc.Database.ORM.SetBuilder;
 import com.darkredgm.querymc.Exceptions.IllegalAccessWithoutKey;
 import com.darkredgm.querymc.Exceptions.IllegalUpdateWithNoKey;
+import com.darkredgm.querymc.QueryMC;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
@@ -163,5 +165,16 @@ public abstract class Model implements DatabaseEnv {
         // Save the values into db
         DB.on(this.getTableName()).insert( builder );
         this.isModelFromDatabase = true;
+    }
+
+    public BaseConnection getConnection()
+    {
+        return QueryMC.getConnection(
+                this.getDatabaseHost(),
+                this.getDatabasePort(),
+                this.getDatabaseUserName(),
+                this.getDatabaseUserPassword(),
+                this.getDatabaseName()
+        );
     }
 }

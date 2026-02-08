@@ -1,5 +1,8 @@
 package com.darkredgm.querymc.Database.Schema;
 
+import com.darkredgm.querymc.Annotations.*;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class DBTable {
@@ -9,7 +12,6 @@ public class DBTable {
     protected String tableName;
     protected ArrayList<DBColumn> columns = new ArrayList<>();
 
-    protected ArrayList<String> primaryKeys = new ArrayList<>();
     protected ArrayList<ForeignKey> foreignKeys = new ArrayList<>();
 
     public DBTable(String tableName, boolean ifNotExists) {
@@ -62,6 +64,11 @@ public class DBTable {
 
     public DBColumn tinyInt(String name) {
         return addColumn(new DBColumn(name, "TINYINT"));
+    }
+
+    public DBColumn booleanCol( String name )
+    {
+        return addColumn(new DBColumn(name, "BOOLEAN"));
     }
 
     public DBColumn smallInt(String name) {
@@ -124,13 +131,57 @@ public class DBTable {
 
     public DBColumn addColumn( DBColumn column )
     {
-//        if ( column.isPrimaryKey() )
-//        {
-//            this.primaryKeys.add( column.getName() );
-//            column.setPrimaryKey( false );
-//        }
-
         this.columns.add( column );
+        return column;
+    }
+
+    /**
+     * Add dynamically columns from model, to avoid doing Schema.create(...) on each time, better automanage
+     * @param name
+     * @param field
+     * @return
+     */
+    public DBColumn addColumn(String name, Field field )
+    {
+        DBColumn column;
+        DbColumn col = field.getAnnotation(DbColumn.class);
+
+        switch ( field.getType().getSimpleName()) {
+            case "int", "Integer" -> column = this.intCol( name );
+            case "long", "Long" -> column = this.bigInt( name );
+            case "double", "Double", "BigDecimal" -> column = this.decimal( name, col.precision(), col.scale() );
+            case "boolean", "Boolean" -> column = this.booleanCol( name );
+            case "java.sql.Date", "java.util.Date" -> column = this.date( name );
+            case "java.sql.Timestamp" -> column = this.timestamp( name );
+            default -> {
+                column = this.varchar( name, col.length() );
+            }
+        };
+
+
+        // Primary key annotation
+        if ( field.isAnnotationPresent(DBColPrimary.class) )
+        {
+            DBColPrimary primary = field.getAnnotation(DBColPrimary.class);
+            column.setPrimaryKey( true );
+
+            if ( primary.autoincrement() )
+            {
+                column.autoIncrement();
+            }
+        }
+
+        if ( field.isAnnotationPresent(DBColDefault.class))
+        {
+            DBColDefault defaults = field.getAnnotation(DBColDefault.class);
+            column.defaultVal( defaults.value() );
+        }
+
+        if ( !col.nullable() )
+        {
+            column.notNull();
+        }
+
         return column;
     }
 
@@ -141,6 +192,8 @@ public class DBTable {
 
     @Override
     public String toString() {
+        ArrayList<String> primaryKeys = new ArrayList<>();
+
         for ( DBColumn column : columns )
         {
             if ( column.isPrimaryKey() )

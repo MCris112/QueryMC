@@ -57,4 +57,8 @@ public class ModelAttribute {
     public String getColumnName() {
         return columnName;
     }
+
+    public Field asField() {
+        return field;
+    }
 }

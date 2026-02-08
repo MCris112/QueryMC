@@ -1,6 +1,7 @@
 package com.darkredgm.querymc.Database.Schema;
 
 
+import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Conecction.MCConnection;
 
 import java.sql.Connection;
@@ -11,18 +12,11 @@ import java.util.function.Consumer;
 
 public class Schema {
 
-    protected MCConnection connection;
+    protected BaseConnection connection;
 
-    public Schema( MCConnection connection) {
+    public Schema(BaseConnection connection) {
         this.connection = connection;
     }
-
-//    public void create(String name , Consumer<DBTable> table ) throws SQLException {
-//        DBTable content = new DBTable(name, false);
-//        table.accept(content);
-//
-//        executeDdl( content.toString() );
-//    }
 
     public static void create(String name , Consumer<DBTable> table ) throws SQLException {
         DBTable content = new DBTable(name, false);
@@ -42,6 +36,7 @@ public class Schema {
         DBTable content = new DBTable(name, true);
         table.accept(content);
 
+        System.out.println(content.toString());
         executeDdl( content.toString() );
     }
 //
@@ -56,8 +51,7 @@ public class Schema {
     // Helper for DDL (reused, safe)
     private void executeDdl(String sql) throws SQLException {
         System.out.println("Executing: " + sql);
-        // TODO
-        try (Connection conn = this.connection.getConnection();
+        try (Connection conn = this.connection.asSqlConnection();
              Statement stmt = conn.createStatement()) {
             int rows = stmt.executeUpdate(sql);
         }

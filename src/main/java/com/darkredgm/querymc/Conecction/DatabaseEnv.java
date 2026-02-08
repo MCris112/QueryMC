@@ -22,6 +22,11 @@ public interface DatabaseEnv {
         return null;
     }
 
+    public default String getDatabaseHost()
+    {
+        return null;
+    }
+
     public String getTableName();
 
 }

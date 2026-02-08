@@ -20,11 +20,8 @@ public  class MCConnection implements DatabaseEnv {
     protected String username;
     protected String password;
 
-    public Schema schema;
-
     public MCConnection() {
         Env env = new Env();
-        this.schema = new Schema(this);
 
         this.databaseName = env.database.getName();
         this.port = env.database.getPort();

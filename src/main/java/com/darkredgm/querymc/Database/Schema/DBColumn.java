@@ -2,6 +2,7 @@ package com.darkredgm.querymc.Database.Schema;
 
 
 import com.darkredgm.querymc.Contracts.SqlAction;
+import com.darkredgm.querymc.Contracts.SqlRaw;
 
 public class DBColumn implements SqlAction {
 
@@ -36,11 +37,16 @@ public class DBColumn implements SqlAction {
         this.length = length;
         return this;
     }
+    public DBColumn defaultVal(Object value) {
+        if (value == null) {
+            this.defaultValue = "NULL";
+            return this;
+        }
 
-    public DBColumn defaultVal(String value) {
-        this.defaultValue = "'"+value+"'";
+        this.defaultValue = value.toString();
         return this;
     }
+
 
     public DBColumn autoIncrement() {
         this.extra += "AUTO_INCREMENT";
@@ -81,8 +87,7 @@ public class DBColumn implements SqlAction {
             sql += " NOT NULL";
         }
 
-        if ( this.defaultValue != null )
-        {
+        if (this.defaultValue != null) {
             sql += " DEFAULT " + this.defaultValue;
         }
 
@@ -90,4 +95,5 @@ public class DBColumn implements SqlAction {
 
         return sql;
     }
+
 }
