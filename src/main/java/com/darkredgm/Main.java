@@ -1,8 +1,6 @@
 package com.darkredgm;
 
 import com.darkredgm.querymc.Database.DB;
-import com.darkredgm.querymc.Database.Schema.Schema;
-import com.darkredgm.querymc.Env.Env;
 
 import java.sql.SQLException;
 
