@@ -99,6 +99,11 @@ public  class MCConnection implements DatabaseEnv {
     }
 
     public ResultSet executeInsertGetId( String sql, List<Object> bindings ) throws SQLException {
+
+        System.out.println(sql);
+        System.out.println();
+        System.out.println();
+
         Connection conn = getConnection();
         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 

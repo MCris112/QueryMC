@@ -1,6 +1,7 @@
 package com.darkredgm.querymc.Database;
 
 
+import com.darkredgm.querymc.Annotations.DBColPrimary;
 import com.darkredgm.querymc.Annotations.DbColumn;
 import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Conecction.DatabaseEnv;
@@ -154,7 +155,16 @@ public abstract class Model implements DatabaseEnv {
         for(ModelAttribute field : this.getFieldAttributes()) {
             try {
                 // Set the value dynamically on query
-                builder.set( field.getColumnName(), field.getValue() );
+
+                if ( field.asField().isAnnotationPresent(DBColPrimary.class) )
+                {
+                    if ( field.getValue() != null)
+                    {
+                        builder.set( field.getColumnName(), field.getValue() );
+                    }
+                }else{
+                    builder.set( field.getColumnName(), field.getValue() );
+                }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }

@@ -104,9 +104,15 @@ public class Grammar {
                 sql.append(", ");
             }
 
-            sql.append("?");
 
-            this.addBinding( entry.getValue() );
+            if ( entry.getValue() != null )
+            {
+                sql.append("?");
+                this.addBinding( entry.getValue() );
+            }else{
+                sql.append("NULL");
+            }
+
             index++;
         }
 
