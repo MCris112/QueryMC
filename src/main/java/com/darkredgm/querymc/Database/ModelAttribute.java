@@ -1,5 +1,6 @@
 package com.darkredgm.querymc.Database;
 
+import com.darkredgm.querymc.Annotations.DBColPrimary;
 import com.darkredgm.querymc.Helpers.Str;
 
 import java.lang.reflect.Field;
@@ -38,19 +39,6 @@ public class ModelAttribute {
     }
 
     public void setValue(Object value) throws IllegalAccessException {
-        // NULL handling for primitives
-        if (value == null) {
-            Class<?> type = this.field.getType();
-            if (type == int.class) value = 0;
-            else if (type == long.class) value = 0L;
-            else if (type == double.class) value = 0.0;
-            else if (type == float.class) value = 0.0f;
-            else if (type == boolean.class) value = false;
-            else if (type == byte.class) value = (byte)0;
-            else if (type == short.class) value = (short)0;
-            else if (type == char.class) value = '\u0000';
-        }
-
         this.field.set(this.model, value);
     }
 
@@ -60,5 +48,9 @@ public class ModelAttribute {
 
     public Field asField() {
         return field;
+    }
+
+    public boolean isPrimaryKey() {
+        return this.field.isAnnotationPresent(DBColPrimary.class);
     }
 }

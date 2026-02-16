@@ -111,7 +111,7 @@ public  class MCConnection implements DatabaseEnv {
             ps.setObject(i + 1, bindings.get(i));
         }
 
-        ps.executeUpdate(sql);
+        ps.executeUpdate();
 
         return ps.getGeneratedKeys();
     }

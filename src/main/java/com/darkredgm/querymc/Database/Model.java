@@ -68,8 +68,8 @@ public abstract class Model implements DatabaseEnv {
     }
 
     public Object getKeyValue() throws IllegalAccessWithoutKey {
-        try{
-            return this.getAttribute( this.getKeyName() );
+        try {
+            return this.getAttribute(this.getKeyName());
         } catch (IllegalAccessException e) {
             throw new IllegalAccessWithoutKey();
         }
@@ -81,14 +81,16 @@ public abstract class Model implements DatabaseEnv {
         for (Field field : getClass().getDeclaredFields()) {
             DbColumn annotation = field.getAnnotation(DbColumn.class);
             if (annotation != null) {
-                fields.add( new ModelAttribute( annotation.value(), field, this) );
+                fields.add(new ModelAttribute(annotation.value(), field, this));
             }
         }
 
         return fields;
     }
+
     /**
      * Obtiene el attributo de la clase
+     *
      * @param name
      * @return
      */
@@ -97,7 +99,7 @@ public abstract class Model implements DatabaseEnv {
         // Exact @DbColumn match (primary)
         for (ModelAttribute field : this.getFieldAttributes()) {
 
-            if (field.getName().equals(name) ) {
+            if (field.getName().equals(name)) {
                 return field;
             }
         }
@@ -107,6 +109,7 @@ public abstract class Model implements DatabaseEnv {
 
     /**
      * Obtener valor dinamicamente del modelo
+     *
      * @param name
      * @return
      * @throws IllegalAccessException
@@ -121,7 +124,25 @@ public abstract class Model implements DatabaseEnv {
     }
 
     /**
+     * Gets ModelAttribute by DB column name (case-insensitive).
+     *
+     * @param name DB column name (e.g., "user_id", "USER_ID")
+     * @return Matching field or null
+     * @throws IllegalAccessException on reflection issues
+     */
+    public ModelAttribute getFieldByColName(String name) throws IllegalAccessException {
+        for (ModelAttribute field : this.getFieldAttributes()) {
+            if (field.getColumnName().equalsIgnoreCase(name)) {
+                return field;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Colocar un valor dinamicamente del modelo
+     *
      * @param name
      * @param value
      * @throws IllegalAccessException
@@ -133,94 +154,98 @@ public abstract class Model implements DatabaseEnv {
         }
     }
 
-    public void fillAttributes(Consumer<SetBuilder> builder ) throws IllegalAccessException {
+    public void setAttributeByColName(String name, Object value) throws IllegalAccessException {
+        ModelAttribute field = this.getFieldByColName(name);
+
+        if (field != null) {
+            field.setValue(value);
+        }
+    }
+
+    public ModelAttribute getFieldPrimaryKey() {
+        for (ModelAttribute field : this.getFieldAttributes()) {
+            if (field.isPrimaryKey()) {
+                return field;
+            }
+        }
+
+        return null;
+    }
+
+    public void fillAttributes(Consumer<SetBuilder> builder) throws IllegalAccessException {
         SetBuilder setBuilder = new SetBuilder();
         builder.accept(setBuilder);
 
-        for(Map.Entry<String, Object> entry : setBuilder.getValues().entrySet() )
-        {
-            this.setAttribute( entry.getKey(), entry.getValue() );
+        for (Map.Entry<String, Object> entry : setBuilder.getValues().entrySet()) {
+            this.setAttribute(entry.getKey(), entry.getValue());
         }
     }
 
     /**
      * Guarda el estado actual en la base de datos
      * Actualiza o inserta un nuevo valor
+     *
      * @throws SQLException
      */
     public void save() throws SQLException {
 
         SetBuilder builder = new SetBuilder();
         // Iterate on each field
-        for(ModelAttribute field : this.getFieldAttributes()) {
+        for (ModelAttribute field : this.getFieldAttributes()) {
             try {
                 // Set the value dynamically on query
 
-                if ( field.asField().isAnnotationPresent(DBColPrimary.class) )
-                {
-                    if ( field.getValue() != null)
-                    {
-                        System.out.printf("[DEBUG][FILL][PK] %s = %s%n", field.getColumnName(), field.getValue() );
-                        builder.set( field.getColumnName(), field.getValue() );
-                    }
-                }else{
-                    System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), field.getValue() );
-                    builder.set( field.getColumnName(), field.getValue() );
-                }
+                if (field.isPrimaryKey() && field.getValue() == null)
+                    continue; // Don't add null PK
+
+                System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), field.getValue());
+                builder.set(field.getColumnName(), field.getValue());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
 
         // If model needs to update or insert
-        if ( this.isModelFromDatabase )
-        {
-            if ( !this.hasKey() )
+        if (this.isModelFromDatabase) {
+            if (!this.hasKey())
                 throw new IllegalUpdateWithNoKey();
 
-            QueryBuilder<?> query = new QueryBuilder<>(this);
-            query.whereKey()
-                    .update(builder);
+            QueryBuilder.use(this.getClass()).whereKey(this.getKeyValue()).update(builder);
             return;
         }
+
+
         // Save the values into db
-        ResultSet result = DB.use(this).table(this.getTableName()).insertGetId( builder );
+        ResultSet result = DB.use(this).table(this.getTableName()).insertGetId(builder);
 
-        if ( result.next() )
-        {
-            ResultSetMetaData metaData = result.getMetaData();
-            int columnCount = metaData.getColumnCount();
+        if (result.next()) {
+            ModelAttribute attr = this.getFieldPrimaryKey();
 
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = metaData.getColumnName(i);
-
-
+            if ( attr != null ) {
+                try{
+                    Class<?> type = attr.asField().getType();
+                    // Avoid error of java.math.BigInteger
+                    if ( type == Integer.class || type == int.class ) {
+                        attr.setValue(result.getInt(1));
+                    }else{
+                        attr.setValue(result.getInt(1));
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
+
         this.isModelFromDatabase = true;
-
-        if ( !this.hasKey() )
-            return;
-
-        Model model = QueryBuilder.use(this.getClass())
-                .limit(1)
-                .orderBy( "id", SqlOrder.DESC )
-                .last();
-
-        if ( model == null )
-            throw new RuntimeException("No se pudo obtener el modelo final");
-
-        try{
-            for (ModelAttribute attribute : this.getFieldAttributes()) {
-                attribute.setValue( model.getAttribute( attribute.getName() ));
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
     }
 
-    public BaseConnection getConnection()
-    {
+    public void delete() throws SQLException {
+        if ( this.getKeyValue() == null )
+            return;
+
+        QueryBuilder.use(this.getClass()).whereKey( this.getKeyValue() ).delete();
+    }
+    public BaseConnection getConnection() {
         return QueryMC.getConnection(
                 this.getDatabaseHost(),
                 this.getDatabasePort(),

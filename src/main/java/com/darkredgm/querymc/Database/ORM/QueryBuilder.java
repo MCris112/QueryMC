@@ -247,9 +247,9 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
         return this;
     }
 
-    public QueryBuilder<M> whereKey()
+    public QueryBuilder<M> whereKey( Object value )
     {
-        return this.where( this.model.getKeyName(), this.model.getKeyValue() );
+        return this.where( this.model.getKeyName(), value );
     }
 
     protected int limit = 0;
