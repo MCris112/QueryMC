@@ -160,9 +160,11 @@ public abstract class Model implements DatabaseEnv {
                 {
                     if ( field.getValue() != null)
                     {
+                        System.out.printf("[DEBUG][FILL][PK] %s = %s%n", field.getColumnName(), field.getValue() );
                         builder.set( field.getColumnName(), field.getValue() );
                     }
                 }else{
+                    System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), field.getValue() );
                     builder.set( field.getColumnName(), field.getValue() );
                 }
             } catch (IllegalAccessException e) {
