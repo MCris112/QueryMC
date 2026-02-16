@@ -22,12 +22,27 @@ public class DB {
         stmt.executeUpdate( sql );
     }
 
+
     public static void createDatabaseIfNotExists( String name ) throws SQLException {
         statement("CREATE DATABASE IF NOT EXISTS " + validateName(name));
     }
 
+    /**
+     * This can throw error cuz needs to be configured
+     * "AllowUserDropDatabase = true"
+     * @param name
+     * @throws SQLException
+     */
+    public static void deleteDatabaseIfNotExists( String name ) throws SQLException {
+        statement("DROP DATABASE IF NOT EXISTS " + validateName(name));
+    }
+
     public static void createDatabase( String name ) throws SQLException {
         statement("CREATE DATABASE " + validateName(name));
+    }
+
+    public static void deleteDatabase( String name ) throws SQLException {
+        statement("DROP DATABASE " + validateName(name));
     }
 
     public BaseConnection getConnection()
@@ -48,11 +63,11 @@ public class DB {
         return "`" + name.replace("`", "``") + "`";
     }
 
-    public static <M extends Model> void verify( Class<M> ...models ) throws SQLException {
-        for ( Class<M> claszz : models )
+    public static void verify( Class<? extends Model> ...models ) throws SQLException {
+        for ( Class<? extends Model> claszz : models )
         {
             try{
-                M model = (M) claszz.getConstructor().newInstance();
+                Model model = (Model) claszz.getConstructor().newInstance();
 
                 List<ModelAttribute> attributes = model.getFieldAttributes();
 

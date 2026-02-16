@@ -9,6 +9,7 @@ import java.sql.SQLException;
 public class Main {
     static void main() throws SQLException {
 
+        DB.deleteDatabase("test_database_test");
         DB.createDatabaseIfNotExists("test_database_test");
         DB.verify( User.class );
     }
