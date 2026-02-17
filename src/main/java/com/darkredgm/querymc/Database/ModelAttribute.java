@@ -1,9 +1,12 @@
 package com.darkredgm.querymc.Database;
 
 import com.darkredgm.querymc.Annotations.DBColPrimary;
+import com.darkredgm.querymc.Annotations.DBForeign;
+import com.darkredgm.querymc.Database.ORM.QueryBuilder;
 import com.darkredgm.querymc.Helpers.Str;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 
 public class ModelAttribute {
 
@@ -39,6 +42,29 @@ public class ModelAttribute {
     }
 
     public void setValue(Object value) throws IllegalAccessException {
+        /*
+        TODO Foregin key works well on set value
+        if ( this.field.isAnnotationPresent(DBForeign.class) )
+        {
+            Class<? extends Model> fieldType = (Class<? extends Model>) field.getType();
+
+            if ( fieldType instanceof Model )
+            {
+                try {
+                    Model model = QueryBuilder.use(fieldType).whereKey(value).first();
+
+                    if ( model != null )
+                    {
+                        this.field.set(this.model, model);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+         */
+
         this.field.set(this.model, value);
     }
 

@@ -15,14 +15,14 @@ public class ForeignKey implements SqlAction {
         this.columnName = referencedColumnName;
     }
 
-    public ForeignKey references(String tableName)
+    public ForeignKey references(String columnName)
     {
-        this.referencedTable = tableName;
+        this.onColumn = columnName;
         return this;
     }
 
-    public ForeignKey on(String columnName) {
-        this.onColumn = columnName;
+    public ForeignKey on(String tableName) {
+        this.referencedTable = tableName;
         return this;
     }
 

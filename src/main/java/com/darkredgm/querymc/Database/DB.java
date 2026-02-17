@@ -1,5 +1,6 @@
 package com.darkredgm.querymc.Database;
 
+import com.darkredgm.querymc.Annotations.DBForeign;
 import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Database.Schema.Schema;
 import com.darkredgm.querymc.QueryMC;
@@ -75,6 +76,27 @@ public class DB {
 
                 schema.createIfNotExists( model.getTableName(), table -> {
                     for(ModelAttribute attribute : attributes) {
+
+                        if ( attribute.asField().isAnnotationPresent(DBForeign.class) ){
+                            System.out.println();
+                            System.out.println( attribute.asField().getName() + " is annotated with " + DBForeign.class.getSimpleName() );
+                            System.out.println();
+                            DBForeign foreign = attribute.asField().getAnnotation(DBForeign.class);
+                            try {
+                                Model modelFK = foreign.model().getConstructor().newInstance();
+                                table.foreignKey(attribute.getColumnName()).references(modelFK.getKeyName()).on(modelFK.getTableName());
+
+                            } catch (InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            } catch (InstantiationException e) {
+                                throw new RuntimeException(e);
+                            } catch (IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            } catch (NoSuchMethodException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
                         table.addColumn( attribute.getColumnName(), attribute.asField() );
                     }
                 } );

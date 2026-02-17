@@ -12,18 +12,22 @@ import java.sql.SQLException;
 public class Main {
     static void main() throws SQLException {
 
-//        DB.deleteDatabase("test_database_test");
-//        DB.createDatabaseIfNotExists("test_database_test");
-//        DB.verify( User.class );
+        DB.deleteDatabase("test_database_test");
+        DB.createDatabaseIfNotExists("test_database_test");
+        DB.verify( User.class, Book.class );
 
 //        MCList<User> models = QueryBuilder.use(User.class).get();
 //
 //        System.out.println(models.toString());
 
         User user = new User("test@gmail.com", "sdfsdfsdf");
-
         user.save();
 
         System.out.println(user);
+
+        Book book = new Book(1);
+        book.save();
+
+        System.out.println(book);
     }
 }

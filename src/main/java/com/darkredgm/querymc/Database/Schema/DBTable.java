@@ -1,8 +1,10 @@
 package com.darkredgm.querymc.Database.Schema;
 
 import com.darkredgm.querymc.Annotations.*;
+import com.darkredgm.querymc.Database.Model;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 public class DBTable {
@@ -187,7 +189,10 @@ public class DBTable {
 
     public ForeignKey foreignKey( String columnName )
     {
-        return new ForeignKey(this.tableName, columnName);
+        ForeignKey fk = new ForeignKey(this.tableName, columnName);
+        this.foreignKeys.add(fk);
+
+        return fk;
     }
 
     @Override
@@ -229,7 +234,7 @@ public class DBTable {
         }
 
         for ( ForeignKey foreignKey : foreignKeys ) {
-            sql += foreignKey.toSql()+",";
+            sql += ", "+foreignKey.toSql();
         }
 
         sql += ");";
