@@ -69,8 +69,6 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
     public MCList<M> get() throws SQLException {
         MCList<M> models = new MCList<M>();
 
-        System.out.println( this.grammar.compileSelect(this ) );
-
         ResultSet result = (ResultSet) this.connection.execute( this.grammar.compileSelect(this ), this.grammar.getBindings() );
 
         while (result.next()) {
@@ -293,6 +291,18 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
         return this;
     }
 
+    private boolean distinct = false;
+
+    public boolean hasDistinct()
+    {
+        return this.distinct;
+    }
+
+    public QueryBuilder<M> distinct()
+    {
+        this.distinct = true;
+        return this;
+    }
 
     @Override
     public String getDatabaseName() {
@@ -317,5 +327,10 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
     @Override
     public String getTableName() {
         return this.model.getTableName();
+    }
+
+    @Override
+    public String toString() {
+        return this.grammar.compileSelect(this);
     }
 }

@@ -6,12 +6,22 @@ import com.darkredgm.querymc.Database.Schema.Schema;
 import com.darkredgm.querymc.QueryMC;
 
 import java.lang.reflect.InvocationTargetException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
 public class DB {
 
+    public static ResultSet executeSelect(String sql ) throws SQLException {
+        DB db = new DB();
+
+        BaseConnection conn = db.getConnection();
+
+        Statement stmt = conn.asSqlConnection().createStatement();
+
+        return stmt.executeQuery( sql );
+    }
 
     public static void statement( String sql ) throws SQLException {
         DB db = new DB();

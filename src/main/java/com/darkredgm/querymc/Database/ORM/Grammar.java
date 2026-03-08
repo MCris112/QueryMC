@@ -16,6 +16,11 @@ public class Grammar {
 
         sql.append("SELECT ");
 
+        if ( query.hasDistinct() )
+        {
+            sql.append("DISTINCT ");
+        }
+
         if ( query.getColumns() == null )
         {
             sql.append("*");

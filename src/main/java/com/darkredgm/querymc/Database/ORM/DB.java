@@ -1,12 +1,14 @@
 package com.darkredgm.querymc.Database.ORM;
 
 
+import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Conecction.DatabaseEnv;
 import com.darkredgm.querymc.Conecction.MCConnection;
 import com.darkredgm.querymc.Database.Model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.function.Consumer;
 
 public class DB implements DatabaseEnv {
@@ -69,6 +71,14 @@ public class DB implements DatabaseEnv {
 
     public ResultSet insertGetId(SetBuilder builder ) throws SQLException {
         return  this.connection.executeInsertGetId( this.grammar.compileInsert(this.tableName, builder), this.grammar.getBindings() );
+    }
+
+    public  ResultSet executeSelect(String sql ) throws SQLException {
+
+
+        Statement stmt = this.connection.getConnection().createStatement();
+
+        return stmt.executeQuery( sql );
     }
 
     @Override
