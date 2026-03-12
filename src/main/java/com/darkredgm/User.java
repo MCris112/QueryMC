@@ -1,19 +1,19 @@
 package com.darkredgm;
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.Primary;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Database.Model;
 
 public class User extends Model {
 
-    @DBColPrimary
-    @DbColumn
+    @Primary
+    @Column
     public Integer id;
 
-    @DbColumn
+    @Column
     public String email;
 
-    @DbColumn
+    @Column
     public String password;
 
     @Override

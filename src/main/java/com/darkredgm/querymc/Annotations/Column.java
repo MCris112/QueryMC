@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DbColumn {
+public @interface Column {
     String value() default "";
 
     int length() default 255;          // VARCHAR(255)

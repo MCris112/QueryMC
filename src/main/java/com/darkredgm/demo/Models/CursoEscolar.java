@@ -1,21 +1,21 @@
 package com.darkredgm.demo.Models;
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.Primary;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Database.Model;
 
 import java.sql.Date;
 
 public class CursoEscolar extends Model {
 
-    @DBColPrimary
-    @DbColumn
+    @Primary
+    @Column
     private int id;
 
-    @DbColumn
+    @Column
     private Date anoInicio;
 
-    @DbColumn
+    @Column
     private Date anoFim;
 
     public CursoEscolar() {

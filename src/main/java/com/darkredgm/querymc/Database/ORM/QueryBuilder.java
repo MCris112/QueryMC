@@ -6,7 +6,6 @@ import com.darkredgm.querymc.Conecction.DatabaseEnv;
 import com.darkredgm.querymc.Conecction.MCConnection;
 import com.darkredgm.querymc.Database.Model;
 import com.darkredgm.querymc.Exceptions.ModelCreationException;
-import com.darkredgm.querymc.Helpers.Str;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
@@ -89,10 +88,10 @@ public class QueryBuilder<M extends Model> implements DatabaseEnv {
 
             // Coloca todos los valores de la tabla dentro del modelo
             for (int i = 1; i <= cols; i++) {
-                String colName = Str.toCamelCase(result.getMetaData().getColumnLabel(i));
+                String colName = result.getMetaData().getColumnLabel(i);
 
                 try{
-                    model.setAttribute(colName, result.getObject(i));
+                    model.setAttributeByColName(colName, result.getObject(i));
                 }catch (IllegalAccessException e){}
             }
 

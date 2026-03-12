@@ -1,21 +1,19 @@
 package com.darkredgm;
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
+import com.darkredgm.querymc.Annotations.Primary;
 import com.darkredgm.querymc.Annotations.DBForeign;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Database.Model;
-
-import java.util.ArrayList;
 
 public class Book extends Model {
 
-    @DBColPrimary
-    @DbColumn
+    @Primary
+    @Column
     private Integer id;
 
 
     @DBForeign(model = User.class)
-    @DbColumn
+    @Column
     private Integer userId;
 
     public Book() {

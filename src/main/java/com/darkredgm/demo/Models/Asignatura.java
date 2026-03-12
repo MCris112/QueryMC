@@ -1,29 +1,29 @@
 package com.darkredgm.demo.Models;
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.BelongsTo;
+import com.darkredgm.querymc.Annotations.Primary;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Database.Model;
 
 public class Asignatura extends Model {
 
-    @DBColPrimary
-    @DbColumn
+    @Primary
+    @Column
     private int codigo;
 
-    @DbColumn
+    @Column
     private String nombre;
 
-    @DbColumn
+    @Column
     private int numeroHoras;
 
-    @DbColumn
-    private int profesorId;
+    @BelongsTo( model = Profesor.class )
+    private Profesor profesor;
 
     public Asignatura() {
     }
 
-    public Asignatura(int codigo, String nombre, int numeroHoras) {
-        this.codigo = codigo;
+    public Asignatura(String nombre, int numeroHoras) {
         this.nombre = nombre;
         this.numeroHoras = numeroHoras;
     }
@@ -51,15 +51,6 @@ public class Asignatura extends Model {
     public void setNumeroHoras(int numeroHoras) {
         this.numeroHoras = numeroHoras;
     }
-
-    public int getProfesorId() {
-        return profesorId;
-    }
-
-    public void setProfesorId(int profesorId) {
-        this.profesorId = profesorId;
-    }
-
 
     @Override
     public String getDatabaseName() {

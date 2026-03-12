@@ -1,29 +1,32 @@
 package com.darkredgm.querymc.Database;
 
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.BelongsTo;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Conecction.BaseConnection;
 import com.darkredgm.querymc.Conecction.DatabaseEnv;
 import com.darkredgm.querymc.Database.ORM.DB;
 import com.darkredgm.querymc.Database.ORM.QueryBuilder;
 import com.darkredgm.querymc.Database.ORM.SetBuilder;
-import com.darkredgm.querymc.Database.ORM.SqlOrder;
 import com.darkredgm.querymc.Exceptions.IllegalAccessWithoutKey;
 import com.darkredgm.querymc.Exceptions.IllegalUpdateWithNoKey;
+import com.darkredgm.querymc.Helpers.Str;
 import com.darkredgm.querymc.QueryMC;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public abstract class Model implements DatabaseEnv {
 
+    public static Map<Class<?>, String> CACHE_KEY_NAMES = new ConcurrentHashMap<>();
+
+    public static Map<Class<?>, List<ModelAttribute>> CACHE_FIELDS =  new ConcurrentHashMap<>();
     /**
      * Constructor por defecto para evitar error en los query
      */
@@ -31,13 +34,18 @@ public abstract class Model implements DatabaseEnv {
     }
 
     public boolean hasKey() {
-        return true;
+        try {
+            this.getKeyName();
+            return true;
+        }catch (IllegalAccessWithoutKey key){
+            return false;
+        }
     }
 
     @Override
     public String getTableName() {
         // Genera automáticamente el nombre de la tabla con base en la clase, volviéndolo plural
-        String name = getClass().getSimpleName().toLowerCase();
+        String name = Str.toSnakeCase( getClass().getSimpleName() );
 
         if (name.endsWith("r"))
             return name + "es";
@@ -64,7 +72,21 @@ public abstract class Model implements DatabaseEnv {
      * @return
      */
     public String getKeyName() {
-        return "id";
+        Class<?> clazz = this.getClass();
+
+        if (CACHE_KEY_NAMES.containsKey(clazz) )
+            return CACHE_KEY_NAMES.get(clazz);
+
+        for (ModelAttribute field: getFieldAttributes() )
+        {
+            if ( field.isPrimaryKey() )
+            {
+                CACHE_KEY_NAMES.put(clazz, field.getColumnName());
+                return field.getColumnName();
+            }
+        }
+
+        throw new IllegalAccessWithoutKey();
     }
 
     public Object getKeyValue() throws IllegalAccessWithoutKey {
@@ -76,15 +98,34 @@ public abstract class Model implements DatabaseEnv {
     }
 
     public List<ModelAttribute> getFieldAttributes() {
-        List<ModelAttribute> fields = new ArrayList<>();
+        Class<?> clazz = this.getClass();
 
-        for (Field field : getClass().getDeclaredFields()) {
-            DbColumn annotation = field.getAnnotation(DbColumn.class);
+        // 1. If we already reflected this class, return the cached list instantly!
+        // TODO BETTER CACHE
+//        if (CACHE_FIELDS.containsKey(clazz)) {
+//            return CACHE_FIELDS.get(clazz);
+//        }
+
+        // 2. Otherwise, do the heavy reflection work
+        List<ModelAttribute> fields = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            Column annotation = field.getAnnotation(Column.class);
             if (annotation != null) {
+                // NOTE: You might need to adjust ModelAttribute to not hold the 'this' instance,
+                // but rather pass the instance when you want to get/set the value.
                 fields.add(new ModelAttribute(annotation.value(), field, this));
+            }
+
+            if ( field.isAnnotationPresent(BelongsTo.class) )
+            {
+                BelongsTo belongsTo = field.getAnnotation(BelongsTo.class);
+
+                fields.add( new ModelAttribute( belongsTo.column(),  field, this ) );
             }
         }
 
+        // 3. Save to cache for the next time
+        CACHE_FIELDS.put(clazz, fields);
         return fields;
     }
 
@@ -199,7 +240,19 @@ public abstract class Model implements DatabaseEnv {
                     continue; // Don't add null PK
 
                 System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), field.getValue());
-                builder.set(field.getColumnName(), field.getValue());
+                if ( field.asField().isAnnotationPresent( BelongsTo.class ) )
+                {
+                    Model relatedModel = (Model) field.getValue();
+
+                    if (relatedModel != null) {
+                        builder.set( field.getColumnName(), relatedModel.getKeyValue() );
+                    } else {
+                        builder.set( field.getColumnName(), null );
+                    }
+                }else{
+                    builder.set(field.getColumnName(), field.getValue());
+                }
+
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
@@ -224,6 +277,7 @@ public abstract class Model implements DatabaseEnv {
             if ( attr != null ) {
                 try{
                     Class<?> type = attr.asField().getType();
+
                     // Avoid error of java.math.BigInteger
                     if ( type == Integer.class || type == int.class ) {
                         attr.setValue(result.getInt(1));
@@ -239,12 +293,21 @@ public abstract class Model implements DatabaseEnv {
         this.isModelFromDatabase = true;
     }
 
+    /**
+     * Delete the model on database
+     * @throws SQLException
+     */
     public void delete() throws SQLException {
         if ( this.getKeyValue() == null )
-            return;
+            throw new IllegalUpdateWithNoKey();
 
         QueryBuilder.use(this.getClass()).whereKey( this.getKeyValue() ).delete();
     }
+
+    /**
+     * Get the connection for this model
+     * @return
+     */
     public BaseConnection getConnection() {
         return QueryMC.getConnection(
                 this.getDatabaseHost(),

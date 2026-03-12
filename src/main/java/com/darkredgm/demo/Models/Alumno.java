@@ -1,25 +1,25 @@
 package com.darkredgm.demo.Models;
 
-import com.darkredgm.querymc.Annotations.DBColPrimary;
-import com.darkredgm.querymc.Annotations.DbColumn;
+import com.darkredgm.querymc.Annotations.Primary;
+import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Database.Model;
 
 public class Alumno extends Model {
 
-    @DBColPrimary
-    @DbColumn
+    @Primary
+    @Column
     private int numeroMatricula;
 
-    @DbColumn
+    @Column
     private String nombre;
 
-    @DbColumn
+    @Column
     private String apellidos;
 
-    @DbColumn
+    @Column
     private String fechaNacimiento;
 
-    @DbColumn
+    @Column
     private String telefono;
 
     public Alumno() {

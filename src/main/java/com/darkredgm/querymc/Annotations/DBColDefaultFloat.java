@@ -1,9 +1,0 @@
-package com.darkredgm.querymc.Annotations;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-@Retention(RetentionPolicy.RUNTIME)
-public @interface DBColDefaultFloat {
-    float value();
-}

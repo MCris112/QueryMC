@@ -1,10 +1,8 @@
 package com.darkredgm.querymc.Database.Schema;
 
 import com.darkredgm.querymc.Annotations.*;
-import com.darkredgm.querymc.Database.Model;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 public class DBTable {
@@ -146,7 +144,8 @@ public class DBTable {
     public DBColumn addColumn(String name, Field field )
     {
         DBColumn column;
-        DbColumn col = field.getAnnotation(DbColumn.class);
+
+        Column col = field.getAnnotation(Column.class);
 
         switch ( field.getType().getSimpleName()) {
             case "int", "Integer" -> column = this.intCol( name );
@@ -162,9 +161,9 @@ public class DBTable {
 
 
         // Primary key annotation
-        if ( field.isAnnotationPresent(DBColPrimary.class) )
+        if ( field.isAnnotationPresent(Primary.class) )
         {
-            DBColPrimary primary = field.getAnnotation(DBColPrimary.class);
+            Primary primary = field.getAnnotation(Primary.class);
             column.setPrimaryKey( true );
 
             if ( primary.autoincrement() )
@@ -191,6 +190,8 @@ public class DBTable {
     {
         ForeignKey fk = new ForeignKey(this.tableName, columnName);
         this.foreignKeys.add(fk);
+
+        System.out.println("\n adding fk");
 
         return fk;
     }

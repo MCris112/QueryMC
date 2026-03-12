@@ -15,20 +15,25 @@ import java.util.Scanner;
 public class Demo {
 
     static void main() throws SQLException {
-//        DB.deleteDatabase("cristopher_matriculas");
-//        DB.createDatabaseIfNotExists("cristopher_matriculas");
+        DB.deleteDatabase("cristopher_matriculas");
+        DB.createDatabaseIfNotExists("cristopher_matriculas");
+
+        DB.verify(Alumno.class, CursoEscolar.class, Profesor.class,Asignatura.class,  Matricula.class);
 //
-//        DB.verify(Alumno.class, Asignatura.class, CursoEscolar.class, Profesor.class, Matricula.class);
+
+//        MCList<Asignatura> list = QueryBuilder.use(Asignatura.class).get();
+
+
+//        System.out.println(list.getFirst().getKeyName());
+
+//        QueryBuilder<User> query = QueryBuilder.use(User.class).distinct();
 //
-
-        QueryBuilder<User> query = QueryBuilder.use(User.class).distinct();
-
-        System.out.println( query );
-
-        System.out.println(
-                query.where("email", ">", "100").where("puntos", "19")
-        );
-//        fillModel(Alumno.class);
+//        System.out.println( query );
+//
+//        System.out.println(
+//                query.where("email", ">", "100").where("puntos", "19")
+//        );
+////        fillModel(Alumno.class);
     }
 
 
