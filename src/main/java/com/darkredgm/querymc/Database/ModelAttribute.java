@@ -46,7 +46,7 @@ public class ModelAttribute {
     }
 
     public Object getValue() throws IllegalAccessException {
-        return  this.field.get(this.model);
+        return this.field.get(this.model);
     }
 
     public void setValue(Object value) throws IllegalAccessException {
@@ -66,12 +66,83 @@ public class ModelAttribute {
                 this.field.set(this.model, targetInstance);
                 return;
             } catch (Exception e) {
-                // If it fails to instantiate or set attribute, we might be setting a model instance directly
+                // If it fails to instantiate or set attribute, we might be setting a model
+                // instance directly
                 if (targetClass.isInstance(value)) {
                     this.field.set(this.model, value);
                     return;
                 }
                 throw new RuntimeException("Failed to instantiate related model: " + targetClass.getName(), e);
+            }
+        }
+
+        // Handle numeric conversions
+        if (value instanceof Number) {
+            Class<?> type = this.field.getType();
+            Number num = (Number) value;
+
+            if (type == int.class || type == Integer.class) {
+                value = num.intValue();
+            } else if (type == double.class || type == Double.class) {
+                value = num.doubleValue();
+            } else if (type == float.class || type == Float.class) {
+                value = num.floatValue();
+            } else if (type == long.class || type == Long.class) {
+                value = num.longValue();
+            } else if (type == short.class || type == Short.class) {
+                value = num.shortValue();
+            } else if (type == byte.class || type == Byte.class) {
+                value = num.byteValue();
+            } else if (type == java.math.BigInteger.class) {
+                value = java.math.BigInteger.valueOf(num.longValue());
+            } else if (type == java.math.BigDecimal.class) {
+                // If the target field is explicitly a BigDecimal,
+                // cast it purely or convert
+                if (num instanceof java.math.BigDecimal) {
+                    value = num;
+                } else if (num instanceof java.math.BigInteger) {
+                    value = new java.math.BigDecimal((java.math.BigInteger) num);
+                } else {
+                    value = new java.math.BigDecimal(num.doubleValue());
+                }
+            }
+        }
+
+        // Handle Date/Time conversions
+        if (value != null) {
+            Class<?> type = this.field.getType();
+            if (value instanceof java.util.Date) {
+                java.util.Date dbDate = (java.util.Date) value;
+                if (type == java.util.Date.class) {
+                    value = new java.util.Date(dbDate.getTime());
+                } else if (type == java.sql.Date.class) {
+                    value = new java.sql.Date(dbDate.getTime());
+                } else if (type == java.sql.Timestamp.class) {
+                    value = new java.sql.Timestamp(dbDate.getTime());
+                } else if (type == java.sql.Time.class) {
+                    value = new java.sql.Time(dbDate.getTime());
+                }
+            } else if (value instanceof String) {
+                // Try to handle simple string dates like "YYYY-MM-DD"
+                if (type == java.util.Date.class || type == java.sql.Date.class || type == java.sql.Timestamp.class
+                        || type == java.sql.Time.class) {
+                    try {
+                        if (type == java.sql.Time.class) {
+                            value = java.sql.Time.valueOf((String) value);
+                        } else {
+                            java.sql.Date parsedDate = java.sql.Date.valueOf((String) value);
+                            if (type == java.util.Date.class) {
+                                value = new java.util.Date(parsedDate.getTime());
+                            } else if (type == java.sql.Date.class) {
+                                value = parsedDate;
+                            } else if (type == java.sql.Timestamp.class) {
+                                value = new java.sql.Timestamp(parsedDate.getTime());
+                            }
+                        }
+                    } catch (IllegalArgumentException e) {
+                        // TODO: Let it gracefully fall back to default failure
+                    }
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 package com.darkredgm.querymc.Database;
 
 
+import com.darkredgm.demo.Models.Prestamo;
 import com.darkredgm.querymc.Annotations.BelongsTo;
 import com.darkredgm.querymc.Annotations.Column;
 import com.darkredgm.querymc.Conecction.BaseConnection;
@@ -91,7 +92,7 @@ public abstract class Model implements DatabaseEnv {
 
     public Object getKeyValue() throws IllegalAccessWithoutKey {
         try {
-            return this.getAttribute(this.getKeyName());
+            return this.getAttributeByColName(this.getKeyName());
         } catch (IllegalAccessException e) {
             throw new IllegalAccessWithoutKey();
         }
@@ -157,6 +158,15 @@ public abstract class Model implements DatabaseEnv {
      */
     public Object getAttribute(String name) throws IllegalAccessException {
         ModelAttribute field = this.getField(name);
+        if (field == null) {
+            return null;
+        }
+
+        return field.getValue();
+    }
+
+    public Object getAttributeByColName(String name) throws IllegalAccessException {
+        ModelAttribute field = this.getFieldByColName(name);
         if (field == null) {
             return null;
         }
@@ -239,7 +249,15 @@ public abstract class Model implements DatabaseEnv {
                 if (field.isPrimaryKey() && field.getValue() == null)
                     continue; // Don't add null PK
 
-                System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), field.getValue());
+                Object val = field.getValue();
+                
+                // If this is a new model (INSERT) and the field is null, we omit it from the insert statement 
+                // so that the database can apply its DEFAULT values (like CURRENT_DATE())
+                if (val == null && !this.isModelFromDatabase) {
+                    continue;
+                }
+
+                System.out.printf("[DEBUG][FILL] %s = %s%n", field.getColumnName(), val);
                 if ( field.asField().isAnnotationPresent( BelongsTo.class ) )
                 {
                     Model relatedModel = (Model) field.getValue();

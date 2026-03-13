@@ -43,7 +43,27 @@ public class DBColumn implements SqlAction {
             return this;
         }
 
-        this.defaultValue = value.toString();
+        String strVal = value.toString().trim();
+
+        if (strVal.equalsIgnoreCase("NULL")) {
+            this.defaultValue = "NULL";
+        } else if (strVal.endsWith("()")) {
+            // MySQL 8+ requires expressions like CURRENT_DATE() to be wrapped in parentheses
+            this.defaultValue = "(" + strVal + ")";
+        } else if (strVal.equalsIgnoreCase("CURRENT_DATE") || 
+                   strVal.equalsIgnoreCase("CURRENT_TIMESTAMP") || 
+                   strVal.equalsIgnoreCase("CURRENT_TIME") || 
+                   strVal.matches("-?\\d+(\\.\\d+)?") ||
+                   strVal.equalsIgnoreCase("TRUE") ||
+                   strVal.equalsIgnoreCase("FALSE")) {
+            this.defaultValue = strVal;
+        } else if ((strVal.startsWith("'") && strVal.endsWith("'")) || 
+                   (strVal.startsWith("\"") && strVal.endsWith("\""))) {
+            this.defaultValue = strVal;
+        } else {
+            this.defaultValue = "'" + strVal + "'";
+        }
+
         return this;
     }
 

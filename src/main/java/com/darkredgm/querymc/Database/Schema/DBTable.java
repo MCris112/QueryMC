@@ -19,26 +19,23 @@ public class DBTable {
         this.ifNotExists = ifNotExists;
     }
 
-
-    public void id()
-    {
+    public void id() {
         DBColumn column = new DBColumn("id", "INT");
 
         column.autoIncrement().setPrimaryKey(true);
 
-        this.addColumn( column );
+        this.addColumn(column);
     }
 
     /// ///////////////////////////////////////
     /// TYPE STRING
     /// ///////////////////////////////////////
 
-
     public DBColumn varchar(String name, int length) {
         return addColumn(new DBColumn(name, "VARCHAR").setLength(length));
     }
 
-    public DBColumn charType(String name, int length) {  // Fixed length
+    public DBColumn charType(String name, int length) { // Fixed length
         return addColumn(new DBColumn(name, "CHAR").setLength(length));
     }
 
@@ -66,8 +63,7 @@ public class DBTable {
         return addColumn(new DBColumn(name, "TINYINT"));
     }
 
-    public DBColumn booleanCol( String name )
-    {
+    public DBColumn booleanCol(String name) {
         return addColumn(new DBColumn(name, "BOOLEAN"));
     }
 
@@ -82,13 +78,14 @@ public class DBTable {
     public DBColumn bigInt(String name) {
         return addColumn(new DBColumn(name, "BIGINT"));
     }
+
     public DBColumn intCol(String name) {
         return addColumn(new DBColumn(name, "INT"));
     }
 
     public DBColumn decimal(String name, int precision, int scale) {
-        DBColumn col = addColumn( new DBColumn(name, "DECIMAL") );
-        col.setExtra( scale > 0 ? "(" + precision + "," + scale + ")" : "(" + precision + ")" );
+        DBColumn col = addColumn(new DBColumn(name, "DECIMAL"));
+        col.setExtra(scale > 0 ? "(" + precision + "," + scale + ")" : "(" + precision + ")");
         return col;
     }
 
@@ -128,66 +125,66 @@ public class DBTable {
         return addColumn(new DBColumn(name, "YEAR"));
     }
 
-
-    public DBColumn addColumn( DBColumn column )
-    {
-        this.columns.add( column );
+    public DBColumn addColumn(DBColumn column) {
+        this.columns.add(column);
         return column;
     }
 
     /**
-     * Add dynamically columns from model, to avoid doing Schema.create(...) on each time, better automanage
+     * Add dynamically columns from model, to avoid doing Schema.create(...) on each
+     * time, better automanage
+     * 
      * @param name
      * @param field
      * @return
      */
-    public DBColumn addColumn(String name, Field field )
-    {
+    public DBColumn addColumn(String name, Field field) {
         DBColumn column;
 
+        // TODO throw error if is not a col annotation
         Column col = field.getAnnotation(Column.class);
 
-        switch ( field.getType().getSimpleName()) {
-            case "int", "Integer" -> column = this.intCol( name );
-            case "long", "Long" -> column = this.bigInt( name );
-            case "double", "Double", "BigDecimal" -> column = this.decimal( name, col.precision(), col.scale() );
-            case "boolean", "Boolean" -> column = this.booleanCol( name );
-            case "java.sql.Date", "java.util.Date" -> column = this.date( name );
-            case "java.sql.Timestamp" -> column = this.timestamp( name );
+        switch (field.getType().getSimpleName()) {
+            case "int", "Integer" -> column = this.intCol(name);
+            case "long", "Long", "BigInteger" -> column = this.bigInt(name);
+            case "short", "Short" -> column = this.smallInt(name);
+            case "byte", "Byte" -> column = this.tinyInt(name);
+            case "double", "Double", "BigDecimal" -> column = this.decimal(name, col != null ? col.precision() : 10, col != null ? col.scale() : 2);
+            case "float", "Float" -> column = this.floatType(name);
+            case "boolean", "Boolean" -> column = this.booleanCol(name);
+            case "char", "Character" -> column = this.charType(name, col != null ? col.length() : 1);
+            case "Date" -> column = this.date(name);
+            case "Timestamp" -> column = this.timestamp(name);
+            case "Time" -> column = this.time(name);
             default -> {
-                column = this.varchar( name, col.length() );
+                column = this.varchar(name, col != null ? col.length() : 255);
             }
-        };
-
+        }
+        ;
 
         // Primary key annotation
-        if ( field.isAnnotationPresent(Primary.class) )
-        {
+        if (field.isAnnotationPresent(Primary.class)) {
             Primary primary = field.getAnnotation(Primary.class);
-            column.setPrimaryKey( true );
+            column.setPrimaryKey(true);
 
-            if ( primary.autoincrement() )
-            {
+            if (primary.autoincrement()) {
                 column.autoIncrement();
             }
         }
 
-        if ( field.isAnnotationPresent(DBColDefault.class))
-        {
+        if (field.isAnnotationPresent(DBColDefault.class)) {
             DBColDefault defaults = field.getAnnotation(DBColDefault.class);
-            column.defaultVal( defaults.value() );
+            column.defaultVal(defaults.value());
         }
 
-        if ( !col.nullable() )
-        {
+        if (!col.nullable()) {
             column.notNull();
         }
 
         return column;
     }
 
-    public ForeignKey foreignKey( String columnName )
-    {
+    public ForeignKey foreignKey(String columnName) {
         ForeignKey fk = new ForeignKey(this.tableName, columnName);
         this.foreignKeys.add(fk);
 
@@ -200,42 +197,39 @@ public class DBTable {
     public String toString() {
         ArrayList<String> primaryKeys = new ArrayList<>();
 
-        for ( DBColumn column : columns )
-        {
-            if ( column.isPrimaryKey() )
-            {
-                primaryKeys.add( column.getName() );
+        for (DBColumn column : columns) {
+            if (column.isPrimaryKey()) {
+                primaryKeys.add(column.getName());
             }
         }
 
-        String sql = "CREATE TABLE "+( this.ifNotExists ? "IF NOT EXISTS " : "")+this.tableName+" (";
+        String sql = "CREATE TABLE " + (this.ifNotExists ? "IF NOT EXISTS " : "") + this.tableName + " (";
 
+        for (DBColumn column : columns) {
 
-        for ( DBColumn column : columns ) {
-
-            if ( primaryKeys.size() == 1 && primaryKeys.contains( column.getName() )) {
+            if (primaryKeys.size() == 1 && primaryKeys.contains(column.getName())) {
                 column.setPrimaryKey(true);
             }
 
-            sql += column.toSql()+",";
+            sql += column.toSql() + ",";
         }
 
-        sql = sql.substring(0, sql.length()-1);
+        sql = sql.substring(0, sql.length() - 1);
 
         if (!primaryKeys.isEmpty()) {
             sql = sql + ", PRIMARY KEY (";
 
-            for ( String key : primaryKeys ) {
-                sql += key+",";
+            for (String key : primaryKeys) {
+                sql += key + ",";
             }
 
-            sql = sql.substring(0, sql.length()-1);
+            sql = sql.substring(0, sql.length() - 1);
 
             sql = sql + ")";
         }
 
-        for ( ForeignKey foreignKey : foreignKeys ) {
-            sql += ", "+foreignKey.toSql();
+        for (ForeignKey foreignKey : foreignKeys) {
+            sql += ", " + foreignKey.toSql();
         }
 
         sql += ");";
