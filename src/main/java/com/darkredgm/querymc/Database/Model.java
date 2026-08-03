@@ -112,7 +112,7 @@ public abstract class Model implements DatabaseEnv {
         for (Field field : clazz.getDeclaredFields()) {
             Column annotation = field.getAnnotation(Column.class);
             if (annotation != null) {
-                // NOTE: You might need to adjust ModelAttribute to not hold the 'this' instance,
+                // TODO might need to adjust ModelAttribute to not hold the 'this' instance,
                 // but rather pass the instance when you want to get/set the value.
                 fields.add(new ModelAttribute(annotation.value(), field, this));
             }
